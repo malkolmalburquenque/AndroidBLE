@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BLEtoFirebase</string>
+    <string name="ble_not_supported">BLE not supported on this Android API</string>
+</resources>
