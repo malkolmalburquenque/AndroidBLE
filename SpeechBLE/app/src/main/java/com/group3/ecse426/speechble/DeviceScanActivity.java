@@ -13,7 +13,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,14 +29,14 @@ import static android.os.SystemClock.sleep;
 
 public class DeviceScanActivity extends ListActivity {
 
-    private BluetoothAdapter mBluetoothAdapter;
+    public BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     //private Handler mHandler; //API 26 :(
     private LeDeviceListAdapter mLeDeviceListAdapter;
     int REQUEST_ENABLE_BT;
 
     // Stops scanning after 10 seconds.
-    private static final long SCAN_PERIOD = 10000;
+    //private static final long SCAN_PERIOD = 10000;
     private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
             runOnUiThread(new Runnable() {
@@ -66,6 +68,8 @@ public class DeviceScanActivity extends ListActivity {
 
 
         scanLeDevice(true);
+
+
     }
 
 
@@ -86,6 +90,35 @@ public class DeviceScanActivity extends ListActivity {
         scanLeDevice(true);
     }
 
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        scanLeDevice(false);
+    }
+
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        scanLeDevice(false);
+        final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
+        if (device == null) {
+            onResume();
+            return;
+        }
+        if (device.getType() != BluetoothDevice.DEVICE_TYPE_LE){
+            Toast.makeText(this, "Device is not LE", Toast.LENGTH_SHORT).show();
+            onResume();
+            return;
+        }
+        Intent intent = new Intent(this, DeviceConnected.class);
+        intent.putExtra(DeviceConnected.EXTRAS_DEVICE_NAME, device.getName());
+        intent.putExtra(DeviceConnected.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+        if (mScanning) {
+            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            mScanning = false;
+        }
+        startActivity(intent);
+    }
 
 
     /*
@@ -112,8 +145,8 @@ public class DeviceScanActivity extends ListActivity {
 
     // Adapter for holding devices found through scanning.
     public class LeDeviceListAdapter extends BaseAdapter {
-        private ArrayList<BluetoothDevice> mLeDevices;
-        private LayoutInflater mInflator;
+        public ArrayList<BluetoothDevice> mLeDevices;
+        public LayoutInflater mInflator;
         public LeDeviceListAdapter() {
             super();
             mLeDevices = new ArrayList<BluetoothDevice>();
@@ -158,7 +191,8 @@ public class DeviceScanActivity extends ListActivity {
             BluetoothDevice device = mLeDevices.get(i);
             final String deviceName = device.getName();
             if (deviceName != null && deviceName.length() > 0)
-                viewHolder.deviceName.setText(deviceName);
+                //viewHolder.deviceName.setText(deviceName);
+                viewHolder.deviceName.setText(device.getName());
             else
                 viewHolder.deviceName.setText("Unknown device");
             viewHolder.deviceAddress.setText(device.getAddress());

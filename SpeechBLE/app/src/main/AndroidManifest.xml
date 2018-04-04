@@ -6,8 +6,10 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <!-- App is only available to BLE Capable devices. Set false if available on others-->
-    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+    <!-- App is only available to BLE Capable devices. Set false if available on others -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -24,6 +26,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".DeviceScanActivity">
+        </activity>
+        <activity
+            android:name=".DeviceConnected"
+            android:label="@string/title_activity_device_connected"
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
     </application>
 

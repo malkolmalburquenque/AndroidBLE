@@ -15,8 +15,7 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    private BluetoothAdapter mBluetoothAdapter;
-    int REQUEST_ENABLE_BT;
+
     int gpsRequestCode;
 
     @Override
