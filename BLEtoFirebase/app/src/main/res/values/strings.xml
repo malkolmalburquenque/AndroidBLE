@@ -1,7 +1,0 @@
-<resources>
-    <string name="app_name">BLEtoFirebase</string>
-    <string name="ble_not_supported">BLE not supported on this Android API</string>
-    <string name="main_activity_title">Welcome, please connect to a BLE transmitter to proceed.</string>
-    <string name="ble_search">Search for a BLE device</string>
-    <string name="ble_searching">Searching for a BLE device...</string>
-</resources>
