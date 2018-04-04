@@ -111,8 +111,8 @@ public class DeviceScanActivity extends ListActivity {
             return;
         }
         Intent intent = new Intent(this, BLEConnect.class);
-        intent.putExtra(DeviceConnected.EXTRAS_DEVICE_NAME, device.getName());
-        intent.putExtra(DeviceConnected.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+        intent.putExtra(BLEConnect.EXTRAS_DEVICE_NAME, device.getName());
+        intent.putExtra(BLEConnect.EXTRAS_DEVICE_ADDRESS, device.getAddress());
         if (mScanning) {
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
             mScanning = false;
