@@ -27,10 +27,9 @@
         </activity>
         <activity android:name=".DeviceScanActivity">
         </activity>
-        <activity
-            android:name=".DeviceConnected"
-            android:label="@string/title_activity_device_connected"
-            android:theme="@style/AppTheme.NoActionBar">
+        <activity android:name=".DeviceConnected">
+        </activity>
+        <activity android:name=".BLEConnect">
         </activity>
     </application>
 

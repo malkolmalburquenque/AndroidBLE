@@ -1,15 +1,14 @@
 package com.group3.ecse426.speechble;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
-public class DeviceConnected extends AppCompatActivity {
+public class BLEConnect extends AppCompatActivity {
 
 
     public static String EXTRAS_DEVICE_NAME;
@@ -23,9 +22,9 @@ public class DeviceConnected extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_device_connected);
-        setContentView(R.layout.activity_device_connected);
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setContentView(R.layout.activity_bleconnect);
+
+        //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
 
         final Intent intent = getIntent();
@@ -47,12 +46,4 @@ public class DeviceConnected extends AppCompatActivity {
         Log.d("DeviceConnected: mDeviceName ", mDeviceName);
         Log.d("DeviceConnected: mDeviceAddress = ", mDeviceAddress);
     }
-
-    private void connectDevice(String address) {
-        //mListener.onShowProgress();
-        BluetoothDevice device= mBluetoothAdapter.getRemoteDevice(address);
-        //mBluetoothGatt=device.connectGatt(this, false, mGattCallback);
-        Log.d("BLE", "connectDevice");
-    }
-
 }

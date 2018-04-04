@@ -110,7 +110,7 @@ public class DeviceScanActivity extends ListActivity {
             onResume();
             return;
         }
-        Intent intent = new Intent(this, DeviceConnected.class);
+        Intent intent = new Intent(this, BLEConnect.class);
         intent.putExtra(DeviceConnected.EXTRAS_DEVICE_NAME, device.getName());
         intent.putExtra(DeviceConnected.EXTRAS_DEVICE_ADDRESS, device.getAddress());
         if (mScanning) {
