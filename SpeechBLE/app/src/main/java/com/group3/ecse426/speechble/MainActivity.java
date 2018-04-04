@@ -32,7 +32,12 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
 
-        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, gpsRequestCode);
+
+        /*
+        ~~~~~~~~~~~~~~~~~~~~~~~~THE FOLLOWING LINE IS REQUIRED IN API 24+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+         */
+
+        //requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, gpsRequestCode);
 
 
 
