@@ -29,6 +29,8 @@
         </activity>
         <activity android:name=".BLEConnect">
         </activity>
+
+        <service android:name=".BLEService"/>
     </application>
 
 </manifest>

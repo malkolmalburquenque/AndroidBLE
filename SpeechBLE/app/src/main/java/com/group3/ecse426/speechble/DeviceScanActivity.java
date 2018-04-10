@@ -34,6 +34,7 @@ public class DeviceScanActivity extends ListActivity {
     //private Handler mHandler; //API 26 :(
     private LeDeviceListAdapter mLeDeviceListAdapter;
     int REQUEST_ENABLE_BT;
+    private static final String TAG = "DeviceScanActivity:  ";
 
     // Stops scanning after 10 seconds.
     //private static final long SCAN_PERIOD = 10000;
@@ -44,7 +45,7 @@ public class DeviceScanActivity extends ListActivity {
                 public void run() {
                     mLeDeviceListAdapter.addDevice(device);
                     mLeDeviceListAdapter.notifyDataSetChanged();
-                    Log.d("BluetoothAdapter.LeScanCallback", "mLeScanCallback CALLED! ");
+                    Log.d(TAG, "mLeScanCallback CALLED! ");
                     //sleep(500);
                 }
             });
@@ -100,22 +101,24 @@ public class DeviceScanActivity extends ListActivity {
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         scanLeDevice(false);
+        //check if device is not null
         final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
         if (device == null) {
             onResume();
             return;
         }
+        //check if selected device is BLE
         if (device.getType() != BluetoothDevice.DEVICE_TYPE_LE){
             Toast.makeText(this, "Device is not LE", Toast.LENGTH_SHORT).show();
             onResume();
             return;
         }
+        //BLE device selected. Pass name and address to our next intent and stop scanning
         Intent intent = new Intent(this, BLEConnect.class);
         intent.putExtra(BLEConnect.EXTRAS_DEVICE_NAME, device.getName());
         intent.putExtra(BLEConnect.EXTRAS_DEVICE_ADDRESS, device.getAddress());
         if (mScanning) {
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            mScanning = false;
+            scanLeDevice(false);
         }
         startActivity(intent);
     }
