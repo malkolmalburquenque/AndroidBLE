@@ -17,9 +17,12 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.lang.*;
 
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -34,6 +37,7 @@ public class BLEConnect extends AppCompatActivity {
     public static String EXTRAS_DEVICE_NAME;
     public static String EXTRAS_DEVICE_ADDRESS;
     String mDeviceName;
+    String mDeviceMode;
     String mDeviceAddress;
     public BluetoothAdapter mBluetoothAdapter;
     public BluetoothManager mBluetoothManager;
@@ -43,11 +47,19 @@ public class BLEConnect extends AppCompatActivity {
     private TextView mConnectionState;
     public BluetoothGattService mGattService;
     public BluetoothGattCharacteristic mEnable;
+    boolean isXYZ;
 
-    public float[] xvalues = new float[1000];
-    public float[] yvalues = new float[1000];
-    public float[] zvalues = new float[1000];
+    public float[] pitchvalues = new float[1000];
+    public float[] rollvalues = new float[1000];
     public float[] micvalues = new float[16000];
+
+    int pitch_index;
+    int roll_index;
+    int mic_index;
+
+    boolean pitchrollcomplete = false;
+    boolean miccomplete = false;
+    boolean readData = true;
 
 
 
@@ -55,6 +67,7 @@ public class BLEConnect extends AppCompatActivity {
     public StorageReference storageRef = storage.getReference();
     public StorageReference micRef = storageRef.child("mic"); //where we store sound
     public StorageReference xyzRef = storageRef.child("xyz"); //where we store accelerometer data
+
 
 
 
@@ -77,9 +90,16 @@ public class BLEConnect extends AppCompatActivity {
 
             Log.d(TAG, "onServicesDiscovered CALLED! ");
 
-
-            mGattService = mBluetoothGatt.getService(UUID.fromString("02366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
-            mEnable = mGattService.getCharacteristic(UUID.fromString("340A1B80-CF4B-11E1-AC36-0002A5D5C51B"));
+            if(isXYZ) {
+                Log.d(TAG, "Expecting XYZ");
+                mGattService = mBluetoothGatt.getService(UUID.fromString("02366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
+                mEnable = mGattService.getCharacteristic(UUID.fromString("340A1B80-CF4B-11E1-AC36-0002A5D5C51B"));
+            }
+            else{
+                Log.d(TAG, "Expecting MIC");
+                mGattService = mBluetoothGatt.getService(UUID.fromString("5E366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
+                mEnable = mGattService.getCharacteristic(UUID.fromString("1E366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
+            }
 //            for (BluetoothGattService gattService : gatt) {
 //                Log.i(TAG, "Service UUID Found: " + gattService.getUuid().toString());
 //            }
@@ -89,7 +109,9 @@ public class BLEConnect extends AppCompatActivity {
                 finish();
             }
             Log.d(TAG, "readCharacteristic");
-            mBluetoothGatt.readCharacteristic(mEnable);
+            if(readData) {
+                mBluetoothGatt.readCharacteristic(mEnable);
+            }
             //deviceConnected();        }
         }
         @Override
@@ -100,15 +122,41 @@ public class BLEConnect extends AppCompatActivity {
 
             String s = "";
 
-            for(int i = 0; i < result.length; i++) {
-                s += new Integer(result[i]);
+            //TODO convert data to readable depending isXYZ
+            //pitch/roll data
+            if(isXYZ) {
+                if(pitch_index < 1000 && roll_index < 1000) {
+                    for (int i = 0; i < result.length; i++) {
+                        s += new Integer(result[i]);
+                        //int ay = result.intValue();
+                    }
+                    pitch_index = pitch_index + 50;
+                    roll_index = roll_index + 50;
+                }
+                else{
+                    pitchrollcomplete = true;
+                    arrayFull();
+                }
+            }
+            //mic data
+            else{
+                if(mic_index < 1000) { //16000
+                    for (int i = 0; i < result.length; i++) {
+                        s += new Integer(result[i]);
+                        //int ay = result.intValue();
+                    }
+                    mic_index = mic_index + 100;
+                }
+                else{
+                    miccomplete = true;
+                    arrayFull();
+                }
             }
 
             Log.d(TAG, "HERE IS OUR RESULT: " + result + " NOW str" + s);
             onServicesDiscovered(gatt, status);
         }
     };
-
 
 
 
@@ -140,16 +188,18 @@ public class BLEConnect extends AppCompatActivity {
         setContentView(R.layout.activity_bleconnect);
 
         final Intent intent = getIntent();
-        mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
+        //mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
+        mDeviceMode = "Not selected";
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
         boolean init_result = initialize();
+
 
         if (!init_result){
             Toast.makeText(this, "BLE Adapter/Manager failure", Toast.LENGTH_SHORT).show();
             finish();
         }
 
-        ((TextView) findViewById(R.id.device_name)).setText("Device Name: " + mDeviceName);
+        ((TextView) findViewById(R.id.device_mode)).setText("Device Mode: " + mDeviceMode);
         ((TextView) findViewById(R.id.device_address)).setText("Device Address: " + mDeviceAddress);
 
         // Log.d(TAG, "init_result = " + init_result);
@@ -157,8 +207,38 @@ public class BLEConnect extends AppCompatActivity {
         Log.d(TAG, "mBluetoothManager = " + mBluetoothManager);
         Log.d(TAG, "mBluetoothAdapter = " + mBluetoothAdapter);
 
-        Log.d(TAG, "mDeviceName = " + mDeviceName);
+        Log.d(TAG, "mDeviceMode = " + mDeviceMode);
         Log.d(TAG, "mDeviceAddress = " + mDeviceAddress);
+
+        //expecting to receive accelerometer data
+        final Button xyz_button = findViewById(R.id.buttonxyz);
+        xyz_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDeviceMode = "Pitch/Roll";
+                pitch_index = 0;
+                roll_index = 0;
+                readData = true;
+                ((TextView) findViewById(R.id.device_mode)).setText("Device Mode: " + mDeviceMode);
+                ((TextView) findViewById(R.id.pitchrollcomplete)).setText("Pitch/roll data required.");
+                isXYZ = true;
+            }
+        });
+
+        //expecting to receive microphone data
+        final Button mic_button = findViewById(R.id.buttonmic);
+        mic_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDeviceMode = "MIC";
+                mic_index = 0;
+                readData = true;
+                ((TextView) findViewById(R.id.device_mode)).setText("Device Mode: " + mDeviceMode);
+                ((TextView) findViewById(R.id.miccomplete)).setText("Mic data required.");
+                isXYZ = false;
+            }
+        });
+
 
         connectDevice(mDeviceAddress);
 
@@ -180,6 +260,26 @@ public class BLEConnect extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         closeGATT();
+    }
+
+    private void arrayFull(){
+        if(pitchrollcomplete && miccomplete){
+            //TODO
+            readData = false;
+            Log.d(TAG, "readData = "+ readData);
+            //closeGATT();
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(pitchrollcomplete){
+                    ((TextView) findViewById(R.id.pitchrollcomplete)).setText("Pitch/roll data complete.");
+                }
+                if(miccomplete){
+                    ((TextView) findViewById(R.id.miccomplete)).setText("Mic data complete.");
+                }
+            }
+        });
     }
 
     private void connectDevice(String address) {
@@ -211,6 +311,8 @@ public class BLEConnect extends AppCompatActivity {
         return true;
     }
 
+
+
     //call when GATT shutdown is desired
     public void closeGATT() {
         if (mBluetoothGatt == null) {
@@ -218,6 +320,11 @@ public class BLEConnect extends AppCompatActivity {
         }
         mBluetoothGatt.close();
         mBluetoothGatt = null;
+    }
+
+    public void startFirebase(){
+        //.wav for mic
+        //.txt for pitch/roll
     }
 
 //    @Override
