@@ -1,13 +1,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
+              android:background="@color/colorBackground"
               android:layout_height="wrap_content">
     <TextView android:id="@+id/device_name"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
+              android:textColor="@color/colorWhite"
               android:textSize="24dp"/>
     <TextView android:id="@+id/device_address"
               android:layout_width="match_parent"
+              android:textColor="@color/colorLime"
               android:layout_height="wrap_content"
               android:textSize="12dp"/>
 </LinearLayout>

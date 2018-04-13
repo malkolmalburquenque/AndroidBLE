@@ -1,9 +1,10 @@
 <resources>
     <string name="app_name">SpeechBLE</string>
     <string name="ble_not_supported">BLE not supported on this device.</string>
-    <string name="main_activity_title">UART will never ever work.</string>
+    <string name="main_activity_title">we like chimken nuggers</string>
     <string name="main_activity_message">ECSE 426 - Group 3</string>
     <string name="ble_search">Search for a BLE device</string>
     <string name="ble_searching">Searching for a BLE device...</string>
     <string name="title_activity_device_connected">DeviceConnected</string>
+    <string name="title_activity_success">Success</string>
 </resources>

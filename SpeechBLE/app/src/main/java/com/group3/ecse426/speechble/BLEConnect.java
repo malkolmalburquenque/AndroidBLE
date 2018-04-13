@@ -168,7 +168,7 @@ public class BLEConnect extends AppCompatActivity {
             }
             //mic data
             else{
-                if(mic_index < 16000) { //16000
+                if(mic_index < 1000) { //16000
                     Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ isMIC ~~~~~~~~~~~~~~~~~~~ mic_index = " + mic_index);
                     int i = 0;
                     int j = mic_index;
@@ -249,12 +249,12 @@ public class BLEConnect extends AppCompatActivity {
                 isXYZ = false;
             }
         });
-        //connectDevice(mDeviceAddress);
-        try {
-            startFirebase();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        connectDevice(mDeviceAddress);
+//        try {
+//            startFirebase();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
 
@@ -399,21 +399,25 @@ public class BLEConnect extends AppCompatActivity {
 //        });
 //
 
-        short[] fake_pitchvalues = {2, 3, 2, 4, 6, 9, 6, 9};
+        //short[] fake_pitchvalues = {2, 3, 2, 4, 6, 9, 6, 9};
         StorageReference pitchRef = storageRef.child("pitch_storage.txt");
-        File pitchValuesFile = createTxt("pitchValuesFile", fake_pitchvalues);
+        File pitchValuesFile = createTxt("pitchValuesFile", pitchvalues);
         uploadToFirebase(pitchValuesFile, pitchRef);
 
 
-        short[] fake_rollvalues = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+        //short[] fake_rollvalues = {1, 2, 3, 4, 5, 6, 7, 8, 9};
         StorageReference rollRef = storageRef.child("roll_storage.txt");
-        File rollValuesFile = createTxt("rollValuesFile", fake_rollvalues);
+        File rollValuesFile = createTxt("rollValuesFile", rollvalues);
         uploadToFirebase(rollValuesFile, rollRef);
 
-        short[] fake_micvalues = {0, 6, 9, 14, 51, 63, 79, 89, 99, 101};
+        //short[] fake_micvalues = {0, 6, 9, 14, 51, 63, 79, 89, 99, 101};
         StorageReference micRef = storageRef.child("mic_storage.txt");
-        File micValuesFile = createTxt("micValuesFile", fake_micvalues);
+        File micValuesFile = createTxt("micValuesFile", micvalues);
         uploadToFirebase(micValuesFile, micRef);
+
+        //No errors, therefor great success
+        Intent intent = new Intent(this, Success.class);
+        startActivity(intent);
 
 
         //UPLOAD ANY FILE
