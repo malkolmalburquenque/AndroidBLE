@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/colorPrimaryDark"
     tools:context="com.group3.ecse426.speechble.BLEConnect">
 
     <LinearLayout
@@ -20,7 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Mode: "
-            android:textColor="@color/colorPrimaryDark"/>
+            android:textColor="@color/colorLime"/>
 
         <TextView
             android:id="@+id/device_address"
@@ -28,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Address: "
-            android:textColor="@color/colorPrimaryDark"/>
+            android:textColor="@color/colorBackground"/>
 
     </LinearLayout>
 

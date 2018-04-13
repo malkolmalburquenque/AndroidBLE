@@ -13,7 +13,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Environment;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,12 +26,24 @@ import android.widget.Button;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.*;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.nio.Buffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,13 +65,13 @@ public class BLEConnect extends AppCompatActivity {
     public BluetoothGattCharacteristic mEnable;
     boolean isXYZ;
 
-    public float[] pitchvalues = new float[1000];
-    public float[] rollvalues = new float[1000];
-    public float[] micvalues = new float[16000];
+    public short[] pitchvalues = new short[1000];
+    public short[] rollvalues = new short[1000];
+    public short[] micvalues = new short[16000];
 
-    int pitch_index;
-    int roll_index;
-    int mic_index;
+    int pitch_index = 0;
+    int roll_index = 0;
+    int mic_index = 0;
 
     boolean pitchrollcomplete = false;
     boolean miccomplete = false;
@@ -120,18 +136,30 @@ public class BLEConnect extends AppCompatActivity {
             byte[] result = characteristic.getValue();
             String str = new String(result, StandardCharsets.UTF_8);
 
-            String s = "";
-
             //TODO convert data to readable depending isXYZ
             //pitch/roll data
             if(isXYZ) {
                 if(pitch_index < 1000 && roll_index < 1000) {
-                    for (int i = 0; i < result.length; i++) {
-                        s += new Integer(result[i]);
-                        //int ay = result.intValue();
+                    Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ isXYZ ~~~~~~~~~~~~~~~~~~~ pitch_index, roll_index = " + pitch_index + "|||" + roll_index);
+                    int x = 0;
+                    Log.d(TAG, "result.length = " + result.length);
+                    int y = pitch_index;
+                    int z = roll_index;
+                    while(x < result.length){
+                        if( x < (result.length)/2) {
+                            pitchvalues[y] = (short) (result[x] << 8 | result[x + 1] & 0xFF);
+                            y = y + 1;
+                        }
+                        else{
+                            rollvalues[z] = (short) (result[x] << 8 | result[x + 1] & 0xFF);
+                            z = z + 1;
+                        }
+                        x = x + 2;
                     }
-                    pitch_index = pitch_index + 50;
-                    roll_index = roll_index + 50;
+                    pitch_index = y;
+                    roll_index = z;
+                    Log.d(TAG, "PITCH VALUES: " + Arrays.toString(pitchvalues));
+                    Log.d(TAG, "ROLL VALUES : " + Arrays.toString(rollvalues));
                 }
                 else{
                     pitchrollcomplete = true;
@@ -140,12 +168,17 @@ public class BLEConnect extends AppCompatActivity {
             }
             //mic data
             else{
-                if(mic_index < 1000) { //16000
-                    for (int i = 0; i < result.length; i++) {
-                        s += new Integer(result[i]);
-                        //int ay = result.intValue();
+                if(mic_index < 16000) { //16000
+                    Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ isMIC ~~~~~~~~~~~~~~~~~~~ mic_index = " + mic_index);
+                    int i = 0;
+                    int j = mic_index;
+                    while(i < result.length){
+                        micvalues[j] = (short) (result[i]<<8 | result[i+1] & 0xFF);
+                        i = i + 2;
+                        j++;
                     }
-                    mic_index = mic_index + 100;
+                    mic_index = j;
+                    Log.d(TAG, "MIC VALUES: " + Arrays.toString(micvalues));
                 }
                 else{
                     miccomplete = true;
@@ -153,33 +186,11 @@ public class BLEConnect extends AppCompatActivity {
                 }
             }
 
-            Log.d(TAG, "HERE IS OUR RESULT: " + result + " NOW str" + s);
+
             onServicesDiscovered(gatt, status);
         }
     };
 
-
-
-    //private BLEService mBluetoothLeService = new BLEService();
-
-//    // Code to manage Service lifecycle.
-//    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-//        @Override
-//        public void onServiceConnected(ComponentName componentName, IBinder service) {
-//            mBluetoothLeService = ((BLEService.LocalBinder) service).getService();
-//            if (!mBluetoothLeService.initialize()) {
-//                Log.e(TAG, "Unable to initialize Bluetooth");
-//                finish();
-//            }
-//            // Automatically connects to the device upon successful start-up initialization.
-//            mBluetoothLeService.connect(mDeviceAddress);
-//            Log.d(TAG, "CONNECT CALLED! ");
-//        }
-//        @Override
-//        public void onServiceDisconnected(ComponentName componentName) {
-//            mBluetoothLeService = null;
-//        }
-//    };
 
 
     @Override
@@ -238,23 +249,14 @@ public class BLEConnect extends AppCompatActivity {
                 isXYZ = false;
             }
         });
-
-
-        connectDevice(mDeviceAddress);
-
-//        Intent gattServiceIntent = new Intent(this, BLEService.class);
-//        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-//        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-//
-//        Log.d(TAG, "mBluetoothLeService = " + mBluetoothLeService);
-//        mBluetoothLeService.connect(mDeviceAddress);
-//
-//        if (mBluetoothLeService != null) {
-//            final boolean result = mBluetoothLeService.connect(mDeviceAddress);
-//            Log.d(TAG, "Connect request result = " + result);
-//        }
-
+        //connectDevice(mDeviceAddress);
+        try {
+            startFirebase();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
 
     @Override
     protected void onPause() {
@@ -268,6 +270,11 @@ public class BLEConnect extends AppCompatActivity {
             readData = false;
             Log.d(TAG, "readData = "+ readData);
             //closeGATT();
+            try {
+                startFirebase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         runOnUiThread(new Runnable() {
             @Override
@@ -322,102 +329,131 @@ public class BLEConnect extends AppCompatActivity {
         mBluetoothGatt = null;
     }
 
-    public void startFirebase(){
+    public void startFirebase() throws IOException {
         //.wav for mic
         //.txt for pitch/roll
-    }
+//        File root = new File(Environment.getExternalStorageDirectory().toString());
+//        File gpxfile = new File(root, "samples.txt");
+//        FileWriter writer = new FileWriter(gpxfile);
+//        writer.append("First string is here to be written.");
+//        writer.flush();
+//        writer.close();
 
-//    @Override
-//    public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-//        super.onServicesDiscovered(gatt, status);
-//        // as soon as services are discovered, acquire characteristic and try enabling
+
+//        Uri file = Uri.fromFile(new File("path/to/images/rivers.jpg"));
+//        StorageReference riversRef = storageRef.child("images/"+file.getLastPathSegment());
+//        uploadTask = riversRef.putFile(file);
 //
-//        Log.d(TAG, "onServicesDiscovered CALLED! ");
-//
-//        //// Why these values? ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
-//        mGattService = mBluetoothGatt.getService(UUID.fromString("02366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
-//        mEnable = mGattService.getCharacteristic(UUID.fromString("340A1B80-CF4B-11E1-AC36-0002A5D5C51B"));
-//        if (mEnable == null) {
-//            Toast.makeText(this, "Service is not found",Toast.LENGTH_LONG).show();
-//            this.finish();
-//        }
-//        mBluetoothGatt.readCharacteristic(mEnable);
-//        //deviceConnected();        }
-//    }
-
-
-
-    //THIS IS WHERE WE RECEIVE OUR DATA
-//    @Override
-//    void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status){
-//        characteristic.getValue(); //set to our recieved data variable
-//    }
-
-
-
-// Handles various events fired by the Service.
-// ACTION_GATT_CONNECTED: connected to a GATT server.
-// ACTION_GATT_DISCONNECTED: disconnected from a GATT server.
-// ACTION_GATT_SERVICES_DISCOVERED: discovered GATT services.
-// ACTION_DATA_AVAILABLE: received data from the device. This can be a
-// result of read or notification operations.
-//    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            final String action = intent.getAction();
-//            if (BLEService.ACTION_GATT_CONNECTED.equals(action)) {
-//                mConnected = true;
-//                //updateConnectionState(R.string.connected);
-//                invalidateOptionsMenu();
-//            } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
-//                mConnected = false;
-//                //updateConnectionState(R.string.disconnected);
-//                invalidateOptionsMenu();
-//                //clearUI();
-//            } else if (BLEService.
-//                    ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-//                // Show all the supported services and characteristics on the
-//                // user interface.
-//                //displayGattServices(mBluetoothLeService.getSupportedGattServices());
-//            } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
-//                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-//            }
-//        }
-//    };
-//
-//    private void updateConnectionState(final int resourceId) {
-//        runOnUiThread(new Runnable() {
+//        // Register observers to listen for when the download is done or if it fails
+//        uploadTask.addOnFailureListener(new OnFailureListener() {
 //            @Override
-//            public void run() {
-//                mConnectionState.setText(resourceId);
+//            public void onFailure(@NonNull Exception exception) {
+//                // Handle unsuccessful uploads
+//            }
+//        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+//                Uri downloadUrl = taskSnapshot.getDownloadUrl();
 //            }
 //        });
-//    }
+
+
+        //TEST
+
+//        byte[] data = "a".getBytes();
 //
-//
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-//        if (mBluetoothLeService != null) {
-//            final boolean result = mBluetoothLeService.connect(mDeviceAddress);
-//            Log.d(TAG, "Connect request result=" + result);
+//        UploadTask uploadTask = micRef.putBytes(data);
+//        uploadTask.addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception exception) {
+//                // Handle unsuccessful uploads
+//            }
+//        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+//                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+//            }
+//        });
+
+
+        //DOWNLOAD FILE
+//        File rootPath = new File(Environment.getExternalStorageDirectory(), "file_name");
+//        if(!rootPath.exists()) {
+//            rootPath.mkdirs();
 //        }
-//    }
+//        final File localFile = new File(rootPath,"imageName.txt");
 //
-//    private static IntentFilter makeGattUpdateIntentFilter() {
-//        final IntentFilter intentFilter = new IntentFilter();
-//        intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
-//        intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
-//        intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
-//        intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
-//        return intentFilter;
-//    }
+//        xyzRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+//            @Override
+//            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+//                Log.e("firebase ",";local tem file created  created " +localFile.toString());
+//                //  updateDb(timestamp,localFile.toString(),position);
+//            }
+//        }).addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception exception) {
+//                Log.e("firebase ",";local tem file not created  created " +exception.toString());
+//            }
+//        });
 //
-//    private void clearUI() {
-//        mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
-//        mDataField.setText(R.string.no_data);
-//    }
+
+        short[] rip = {2, 3, 2, 4, 6, 9, 6, 9};
+        File newFile = createTxt("test_file", rip);
+
+
+        //UPLOAD ANY FILE
+
+
+        Uri file = Uri.fromFile(newFile);
+        Log.d("file.getPath()", "~~~~~~~~~~~~~~" + file.getPath());
+        StorageReference pitchRef = storageRef.child("pitch_storage.txt");
+        UploadTask uploadTask = pitchRef.putFile(file);
+
+        // Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+                Log.d("uploadFail", "" + exception);
+
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                //sendNotification("upload backup", 1);
+
+                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+
+                Log.d("downloadUrl", "" + downloadUrl);
+            }
+        });
+
+
+
+
+
+
+
+    }
+
+    /*
+    Create a .txt file to upload to firebase
+     */
+    public File createTxt(String file_name, short[] data) throws IOException{
+        //String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)+"/"+file_name;
+       // String test = Environment.getDataDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + file_name;
+        String path = this.getFilesDir() + "/" + file_name;
+        File curr = new File(path);
+        //BufferedWriter outputWriter = new BufferedWriter(new FileWriter(file_name));
+        BufferedWriter outputWriter = new BufferedWriter(new FileWriter(path));
+        outputWriter.write(Arrays.toString(data));
+        outputWriter.flush();
+        outputWriter.close();
+        return curr;
+    }
 
 }
 
