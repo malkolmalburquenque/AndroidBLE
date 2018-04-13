@@ -399,37 +399,45 @@ public class BLEConnect extends AppCompatActivity {
 //        });
 //
 
-        short[] rip = {2, 3, 2, 4, 6, 9, 6, 9};
-        File newFile = createTxt("test_file", rip);
+        short[] fake_pitchvalues = {2, 3, 2, 4, 6, 9, 6, 9};
+        StorageReference pitchRef = storageRef.child("pitch_storage.txt");
+        File pitchValuesFile = createTxt("pitchValuesFile", fake_pitchvalues);
+        uploadToFirebase(pitchValuesFile, pitchRef);
+        
+
+        short[] fake_rollvalues = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+        StorageReference rollRef = storageRef.child("roll_storage.txt");
+        File rollValuesFile = createTxt("rollValuesFile", fake_rollvalues);
+        uploadToFirebase(rollValuesFile, rollRef);
 
 
         //UPLOAD ANY FILE
 
 
-        Uri file = Uri.fromFile(newFile);
-        Log.d("file.getPath()", "~~~~~~~~~~~~~~" + file.getPath());
-        StorageReference pitchRef = storageRef.child("pitch_storage.txt");
-        UploadTask uploadTask = pitchRef.putFile(file);
-
-        // Register observers to listen for when the download is done or if it fails
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
-                Log.d("uploadFail", "" + exception);
-
-            }
-        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                //sendNotification("upload backup", 1);
-
-                Uri downloadUrl = taskSnapshot.getDownloadUrl();
-
-                Log.d("downloadUrl", "" + downloadUrl);
-            }
-        });
+//        Uri file = Uri.fromFile(newFile);
+//        Log.d("file.getPath()", "~~~~~~~~~~~~~~" + file.getPath());
+//        StorageReference pitchRef = storageRef.child("pitch_storage.txt");
+//        UploadTask uploadTask = pitchRef.putFile(file);
+//
+//        // Register observers to listen for when the download is done or if it fails
+//        uploadTask.addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception exception) {
+//                // Handle unsuccessful uploads
+//                Log.d("uploadFail", "" + exception);
+//
+//            }
+//        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+//                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+//                //sendNotification("upload backup", 1);
+//
+//                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+//
+//                Log.d("downloadUrl", "" + downloadUrl);
+//            }
+//        });
 
 
 
@@ -453,6 +461,33 @@ public class BLEConnect extends AppCompatActivity {
         outputWriter.flush();
         outputWriter.close();
         return curr;
+    }
+
+    public void uploadToFirebase(File currentFile, StorageReference currentRef){
+        Uri file = Uri.fromFile(currentFile);
+        Log.d("file.getPath()", "~~~~~~~~~~~~~~" + file.getPath());
+        //StorageReference pitchRef = storageRef.child("pitch_storage.txt");
+        UploadTask uploadTask = currentRef.putFile(file);
+
+        // Register observers to listen for when the download is done or if it fails
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+                Log.d("uploadFail", "" + exception);
+
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                //sendNotification("upload backup", 1);
+
+                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+
+                Log.d("downloadUrl", "" + downloadUrl);
+            }
+        });
     }
 
 }
