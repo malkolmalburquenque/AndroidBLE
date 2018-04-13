@@ -403,12 +403,17 @@ public class BLEConnect extends AppCompatActivity {
         StorageReference pitchRef = storageRef.child("pitch_storage.txt");
         File pitchValuesFile = createTxt("pitchValuesFile", fake_pitchvalues);
         uploadToFirebase(pitchValuesFile, pitchRef);
-        
+
 
         short[] fake_rollvalues = {1, 2, 3, 4, 5, 6, 7, 8, 9};
         StorageReference rollRef = storageRef.child("roll_storage.txt");
         File rollValuesFile = createTxt("rollValuesFile", fake_rollvalues);
         uploadToFirebase(rollValuesFile, rollRef);
+
+        short[] fake_micvalues = {0, 6, 9, 14, 51, 63, 79, 89, 99, 101};
+        StorageReference micRef = storageRef.child("mic_storage.txt");
+        File micValuesFile = createTxt("micValuesFile", fake_micvalues);
+        uploadToFirebase(micValuesFile, micRef);
 
 
         //UPLOAD ANY FILE
@@ -457,7 +462,14 @@ public class BLEConnect extends AppCompatActivity {
         File curr = new File(path);
         //BufferedWriter outputWriter = new BufferedWriter(new FileWriter(file_name));
         BufferedWriter outputWriter = new BufferedWriter(new FileWriter(path));
-        outputWriter.write(Arrays.toString(data));
+
+        //display as array
+        //outputWriter.write(Arrays.toString(data));
+
+        //display as a new line for each entry
+        for(int i = 0; i < data.length; i ++){
+            outputWriter.write(data[i]+"\n");
+        }
         outputWriter.flush();
         outputWriter.close();
         return curr;
@@ -485,7 +497,7 @@ public class BLEConnect extends AppCompatActivity {
 
                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
 
-                Log.d("downloadUrl", "" + downloadUrl);
+                Log.d(TAG, "GREAT SUCCESS! " + downloadUrl);
             }
         });
     }
