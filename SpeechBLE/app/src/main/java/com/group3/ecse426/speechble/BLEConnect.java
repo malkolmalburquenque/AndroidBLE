@@ -59,8 +59,6 @@ public class BLEConnect extends AppCompatActivity {
     public BluetoothManager mBluetoothManager;
     public BluetoothGatt mBluetoothGatt;
     private static final String TAG = "BLEConnect: ";
-    private boolean mConnected = false;
-    private TextView mConnectionState;
     public BluetoothGattService mGattService;
     public BluetoothGattCharacteristic mEnable;
     boolean isXYZ;
@@ -81,8 +79,6 @@ public class BLEConnect extends AppCompatActivity {
 
     public FirebaseStorage storage = FirebaseStorage.getInstance();
     public StorageReference storageRef = storage.getReference();
-    public StorageReference micRef = storageRef.child("mic"); //where we store sound
-    public StorageReference xyzRef = storageRef.child("xyz"); //where we store accelerometer data
 
 
 
@@ -107,7 +103,7 @@ public class BLEConnect extends AppCompatActivity {
             Log.d(TAG, "onServicesDiscovered CALLED! ");
 
             if(isXYZ) {
-                Log.d(TAG, "Expecting XYZ");
+                Log.d(TAG, "Expecting PITCH/ROLL");
                 mGattService = mBluetoothGatt.getService(UUID.fromString("02366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
                 mEnable = mGattService.getCharacteristic(UUID.fromString("340A1B80-CF4B-11E1-AC36-0002A5D5C51B"));
             }
@@ -116,11 +112,7 @@ public class BLEConnect extends AppCompatActivity {
                 mGattService = mBluetoothGatt.getService(UUID.fromString("5E366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
                 mEnable = mGattService.getCharacteristic(UUID.fromString("1E366E80-CF3A-11E1-9AB4-0002A5D5C51B"));
             }
-//            for (BluetoothGattService gattService : gatt) {
-//                Log.i(TAG, "Service UUID Found: " + gattService.getUuid().toString());
-//            }
             if (mEnable == null) {
-                //Toast.makeText(this, "Service is not found",Toast.LENGTH_LONG).show();
                 Log.d(TAG, "Service not found");
                 finish();
             }
@@ -128,26 +120,29 @@ public class BLEConnect extends AppCompatActivity {
             if(readData) {
                 mBluetoothGatt.readCharacteristic(mEnable);
             }
-            //deviceConnected();        }
         }
+
+        /*
+        This method is called after reading on characteristic successfully.
+
+         */
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt , BluetoothGattCharacteristic characteristic, int status){
             super.onCharacteristicRead(gatt, characteristic, status);
-            byte[] result = characteristic.getValue();
-            String str = new String(result, StandardCharsets.UTF_8);
+            byte[] result = characteristic.getValue(); //data we receive from the characteristic is given to result
 
-            //TODO convert data to readable depending isXYZ
             //pitch/roll data
             if(isXYZ) {
+                //packets are received in size 4, and we are to store 1000 values of both pitch and roll
                 if(pitch_index < 1000 && roll_index < 1000) {
-                    Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ isXYZ ~~~~~~~~~~~~~~~~~~~ pitch_index, roll_index = " + pitch_index + "|||" + roll_index);
+                    Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ PITCH&ROLL ~~~~~~~~~~~~~~~~~~~ pitch_index ||| roll_index = " + pitch_index + " ||| " + roll_index);
                     int x = 0;
                     Log.d(TAG, "result.length = " + result.length);
                     int y = pitch_index;
                     int z = roll_index;
                     while(x < result.length){
                         if( x < (result.length)/2) {
-                            pitchvalues[y] = (short) (result[x] << 8 | result[x + 1] & 0xFF);
+                            pitchvalues[y] = (short) (result[x] << 8 | result[x + 1] & 0xFF); //convert byte to short
                             y = y + 1;
                         }
                         else{
@@ -158,18 +153,21 @@ public class BLEConnect extends AppCompatActivity {
                     }
                     pitch_index = y;
                     roll_index = z;
+                    //Display data
                     Log.d(TAG, "PITCH VALUES: " + Arrays.toString(pitchvalues));
                     Log.d(TAG, "ROLL VALUES : " + Arrays.toString(rollvalues));
                 }
                 else{
+                    //sample received
                     pitchrollcomplete = true;
                     arrayFull();
                 }
             }
             //mic data
             else{
-                if(mic_index < 1000) { //16000
-                    Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ isMIC ~~~~~~~~~~~~~~~~~~~ mic_index = " + mic_index);
+                //packet size is 8, and we are to receive 16000 values
+                if(mic_index < 16000) { //16000
+                    Log.d(TAG, "~~~~~~~~~~~~~~~~~~~~~~~ MIC ~~~~~~~~~~~~~~~~~~~ mic_index = " + mic_index);
                     int i = 0;
                     int j = mic_index;
                     while(i < result.length){
@@ -181,12 +179,11 @@ public class BLEConnect extends AppCompatActivity {
                     Log.d(TAG, "MIC VALUES: " + Arrays.toString(micvalues));
                 }
                 else{
+                    //sample received
                     miccomplete = true;
                     arrayFull();
                 }
             }
-
-
             onServicesDiscovered(gatt, status);
         }
     };
@@ -199,12 +196,12 @@ public class BLEConnect extends AppCompatActivity {
         setContentView(R.layout.activity_bleconnect);
 
         final Intent intent = getIntent();
-        //mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
+        //mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME); //name not necessary
         mDeviceMode = "Not selected";
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+        //initialize bluetooth manager and adapter
         boolean init_result = initialize();
-
-
+        //check if manager & adapter are good
         if (!init_result){
             Toast.makeText(this, "BLE Adapter/Manager failure", Toast.LENGTH_SHORT).show();
             finish();
@@ -212,8 +209,6 @@ public class BLEConnect extends AppCompatActivity {
 
         ((TextView) findViewById(R.id.device_mode)).setText("Device Mode: " + mDeviceMode);
         ((TextView) findViewById(R.id.device_address)).setText("Device Address: " + mDeviceAddress);
-
-        // Log.d(TAG, "init_result = " + init_result);
 
         Log.d(TAG, "mBluetoothManager = " + mBluetoothManager);
         Log.d(TAG, "mBluetoothAdapter = " + mBluetoothAdapter);
@@ -249,12 +244,8 @@ public class BLEConnect extends AppCompatActivity {
                 isXYZ = false;
             }
         });
+        //connect to the selected device
         connectDevice(mDeviceAddress);
-//        try {
-//            startFirebase();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 
 
@@ -264,9 +255,11 @@ public class BLEConnect extends AppCompatActivity {
         closeGATT();
     }
 
+    /*
+    This method checks if both samples are full, and if so, calls firebase upload
+     */
     private void arrayFull(){
         if(pitchrollcomplete && miccomplete){
-            //TODO
             readData = false;
             Log.d(TAG, "readData = "+ readData);
             //closeGATT();
@@ -289,17 +282,18 @@ public class BLEConnect extends AppCompatActivity {
         });
     }
 
+    //attempt to connect to selected device
     private void connectDevice(String address) {
         if (!mBluetoothAdapter.isEnabled()) {
             Toast.makeText(this, "BLE Disabled :(", Toast.LENGTH_SHORT).show();
             this.finish();
         }
-        //mListener.onShowProgress();
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         mBluetoothGatt = device.connectGatt(this, false, mCallback);
         Log.d(TAG, "connectDevice");
     }
 
+    //check if we can initialize our connection to Bluetooth Manger and Adapter
     public boolean initialize() {
         // For API level 18 and above, get a reference to BluetoothAdapter through
         // BluetoothManager.
@@ -320,7 +314,9 @@ public class BLEConnect extends AppCompatActivity {
 
 
 
-    //call when GATT shutdown is desired
+    /*
+    call when GATT shutdown is desired -- transmission over
+     */
     public void closeGATT() {
         if (mBluetoothGatt == null) {
             return;
@@ -330,149 +326,39 @@ public class BLEConnect extends AppCompatActivity {
     }
 
     public void startFirebase() throws IOException {
-        //.wav for mic
-        //.txt for pitch/roll
-//        File root = new File(Environment.getExternalStorageDirectory().toString());
-//        File gpxfile = new File(root, "samples.txt");
-//        FileWriter writer = new FileWriter(gpxfile);
-//        writer.append("First string is here to be written.");
-//        writer.flush();
-//        writer.close();
 
-
-//        Uri file = Uri.fromFile(new File("path/to/images/rivers.jpg"));
-//        StorageReference riversRef = storageRef.child("images/"+file.getLastPathSegment());
-//        uploadTask = riversRef.putFile(file);
-//
-//        // Register observers to listen for when the download is done or if it fails
-//        uploadTask.addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception exception) {
-//                // Handle unsuccessful uploads
-//            }
-//        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-//                Uri downloadUrl = taskSnapshot.getDownloadUrl();
-//            }
-//        });
-
-
-        //TEST
-
-//        byte[] data = "a".getBytes();
-//
-//        UploadTask uploadTask = micRef.putBytes(data);
-//        uploadTask.addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception exception) {
-//                // Handle unsuccessful uploads
-//            }
-//        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-//                Uri downloadUrl = taskSnapshot.getDownloadUrl();
-//            }
-//        });
-
-
-        //DOWNLOAD FILE
-//        File rootPath = new File(Environment.getExternalStorageDirectory(), "file_name");
-//        if(!rootPath.exists()) {
-//            rootPath.mkdirs();
-//        }
-//        final File localFile = new File(rootPath,"imageName.txt");
-//
-//        xyzRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-//                Log.e("firebase ",";local tem file created  created " +localFile.toString());
-//                //  updateDb(timestamp,localFile.toString(),position);
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception exception) {
-//                Log.e("firebase ",";local tem file not created  created " +exception.toString());
-//            }
-//        });
-//
-
-        //short[] fake_pitchvalues = {2, 3, 2, 4, 6, 9, 6, 9};
+        //store pitch values
         StorageReference pitchRef = storageRef.child("pitch_storage.txt");
         File pitchValuesFile = createTxt("pitchValuesFile", pitchvalues);
         uploadToFirebase(pitchValuesFile, pitchRef);
 
-
-        //short[] fake_rollvalues = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+        //store roll values
         StorageReference rollRef = storageRef.child("roll_storage.txt");
         File rollValuesFile = createTxt("rollValuesFile", rollvalues);
         uploadToFirebase(rollValuesFile, rollRef);
 
-        //short[] fake_micvalues = {0, 6, 9, 14, 51, 63, 79, 89, 99, 101};
+        //store mic values
         StorageReference micRef = storageRef.child("mic_storage.txt");
         File micValuesFile = createTxt("micValuesFile", micvalues);
         uploadToFirebase(micValuesFile, micRef);
 
-        //No errors, therefor great success
+        //No errors, therefore great success
         Intent intent = new Intent(this, Success.class);
         startActivity(intent);
-
-
-        //UPLOAD ANY FILE
-
-
-//        Uri file = Uri.fromFile(newFile);
-//        Log.d("file.getPath()", "~~~~~~~~~~~~~~" + file.getPath());
-//        StorageReference pitchRef = storageRef.child("pitch_storage.txt");
-//        UploadTask uploadTask = pitchRef.putFile(file);
-//
-//        // Register observers to listen for when the download is done or if it fails
-//        uploadTask.addOnFailureListener(new OnFailureListener() {
-//            @Override
-//            public void onFailure(@NonNull Exception exception) {
-//                // Handle unsuccessful uploads
-//                Log.d("uploadFail", "" + exception);
-//
-//            }
-//        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-//                //sendNotification("upload backup", 1);
-//
-//                Uri downloadUrl = taskSnapshot.getDownloadUrl();
-//
-//                Log.d("downloadUrl", "" + downloadUrl);
-//            }
-//        });
-
-
-
-
-
-
-
     }
 
+
     /*
-    Create a .txt file to upload to firebase
+    Create a .txt file to upload to Firebase
      */
     public File createTxt(String file_name, short[] data) throws IOException{
-        //String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)+"/"+file_name;
-       // String test = Environment.getDataDirectory(Environment.DIRECTORY_DOCUMENTS) + "/" + file_name;
         String path = this.getFilesDir() + "/" + file_name;
         File curr = new File(path);
-        //BufferedWriter outputWriter = new BufferedWriter(new FileWriter(file_name));
         BufferedWriter outputWriter = new BufferedWriter(new FileWriter(path));
 
-        //display as array
-        //outputWriter.write(Arrays.toString(data));
-
-        //display as a new line for each entry
+        //display as a new line for each entry (for server side processing)
         for(int i = 0; i < data.length; i ++){
-            outputWriter.write(data[i]+"\n");
+            outputWriter.write(data[i]+"\r\n");
         }
         outputWriter.flush();
         outputWriter.close();
@@ -482,26 +368,19 @@ public class BLEConnect extends AppCompatActivity {
     public void uploadToFirebase(File currentFile, StorageReference currentRef){
         Uri file = Uri.fromFile(currentFile);
         Log.d("file.getPath()", "~~~~~~~~~~~~~~" + file.getPath());
-        //StorageReference pitchRef = storageRef.child("pitch_storage.txt");
         UploadTask uploadTask = currentRef.putFile(file);
 
-        // Register observers to listen for when the download is done or if it fails
         uploadTask.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
-                // Handle unsuccessful uploads
                 Log.d("uploadFail", "" + exception);
 
             }
         }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
-                //sendNotification("upload backup", 1);
-
                 Uri downloadUrl = taskSnapshot.getDownloadUrl();
-
-                Log.d(TAG, "GREAT SUCCESS! " + downloadUrl);
+                Log.d(TAG, "Data successfully uploaded! " + downloadUrl);
             }
         });
     }

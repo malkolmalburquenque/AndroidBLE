@@ -36,8 +36,6 @@ public class DeviceScanActivity extends ListActivity {
     int REQUEST_ENABLE_BT;
     private static final String TAG = "DeviceScanActivity:  ";
 
-    // Stops scanning after 10 seconds.
-    //private static final long SCAN_PERIOD = 10000;
     private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
             runOnUiThread(new Runnable() {
@@ -46,7 +44,6 @@ public class DeviceScanActivity extends ListActivity {
                     mLeDeviceListAdapter.addDevice(device);
                     mLeDeviceListAdapter.notifyDataSetChanged();
                     Log.d(TAG, "mLeScanCallback CALLED! ");
-                    //sleep(500);
                 }
             });
         }
@@ -67,10 +64,7 @@ public class DeviceScanActivity extends ListActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
-
         scanLeDevice(true);
-
-
     }
 
 
@@ -129,15 +123,6 @@ public class DeviceScanActivity extends ListActivity {
      */
     public void scanLeDevice(final boolean enable) {
         if (enable) {
-            // Stops scanning after a pre-defined scan period.
-            //mHandler.postDelayed(new Runnable() {
-            //    @Override
-            //    public void run() {
-            //        mScanning = false;
-            //        mBluetoothAdapter.stopLeScan(mLeScanCallback);
-            //    }
-            //}, SCAN_PERIOD);
-
             mScanning = true;
             mBluetoothAdapter.startLeScan(mLeScanCallback);
         } else {
@@ -146,7 +131,10 @@ public class DeviceScanActivity extends ListActivity {
         }
     }
 
-    // Adapter for holding devices found through scanning.
+    /*
+     Adapter for holding devices found through scanning.
+     The following method is taken from Google Android tutorial documents
+    */
     public class LeDeviceListAdapter extends BaseAdapter {
         public ArrayList<BluetoothDevice> mLeDevices;
         public LayoutInflater mInflator;
@@ -212,7 +200,6 @@ public class DeviceScanActivity extends ListActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        //if(requestCode == ScanFragement.REQUEST_ENABLE_BT) {
         if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == Activity.RESULT_CANCELED) {
                 Toast.makeText(this, "Bluetooth Disabled",Toast.LENGTH_SHORT).show();

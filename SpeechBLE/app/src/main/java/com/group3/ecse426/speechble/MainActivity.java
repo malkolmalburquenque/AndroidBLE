@@ -41,19 +41,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-//        // Initializes Bluetooth adapter.
-//        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-//        mBluetoothAdapter = bluetoothManager.getAdapter();
-//
-//        // Ensures Bluetooth is available on the device and it is enabled. If not,
-//        // displays a dialog requesting user permission to enable Bluetooth.
-//        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-//            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-//            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-//        }
-
-
         //ble_search button initializes search for transmitter device
         final Button ble_search_button = findViewById(R.id.ble_search);
         ble_search_button.setOnClickListener(new View.OnClickListener() {
@@ -74,19 +61,5 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
     }
-
-//    //called from startActivityForResult()
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        //if(requestCode == ScanFragement.REQUEST_ENABLE_BT) {
-//        if (requestCode == REQUEST_ENABLE_BT) {
-//            if (resultCode == Activity.RESULT_CANCELED) {
-//                Toast.makeText(this, "Bluetooth Disabled",Toast.LENGTH_SHORT).show();
-//                finish();
-//            }
-//            //else we are good, proceed
-//        }
-//    }
 
 }

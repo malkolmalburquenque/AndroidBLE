@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/colorBackground"
-            android:text="ayy"/>
+            android:text=""/>
 
         <TextView
             android:id="@+id/miccomplete"
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/colorLime"
-            android:text="lmao"/>
+            android:text=""/>
     </LinearLayout>
 
 

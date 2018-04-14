@@ -15,10 +15,11 @@
         android:text="@string/main_activity_title"
         android:textColor="@color/colorWhite"
         android:textSize="26dp"
-        android:layout_weight="1"
+        android:layout_weight="3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        android:layout_gravity="center"
         android:gravity="center"
         app:layout_constraintTop_toTopOf="parent"/>
 
@@ -27,7 +28,7 @@
         android:layout_height="0dp"
         android:text="@string/main_activity_message"
         android:textColor="@color/colorWhite"
-        android:layout_weight="1"
+        android:layout_weight="2"
         android:paddingTop="15dp"
         android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -37,11 +38,12 @@
 
     <Button
         android:id="@+id/ble_search"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="4"
+        android:layout_weight="1"
         android:backgroundTint="@color/colorLime"
         android:gravity="center"
+        android:layout_gravity="center"
         android:text="@string/ble_search"/>
 
 

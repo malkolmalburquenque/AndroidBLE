@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">SpeechBLE</string>
     <string name="ble_not_supported">BLE not supported on this device.</string>
-    <string name="main_activity_title">we like chimken nuggers</string>
-    <string name="main_activity_message">ECSE 426 - Group 3</string>
+    <string name="main_activity_title">Please connect to a BLE device to proceed.</string>
+    <string name="main_activity_message">The purpose of this application is to connect to a STM32 Nucleo board transmitting a 1 second voice sample, as well as the board\'s pitch and roll values. The application is to receive the data over Bluetooth Low Energy, and upload the samples to our Google Firebase for processing.</string>
     <string name="ble_search">Search for a BLE device</string>
     <string name="ble_searching">Searching for a BLE device...</string>
     <string name="title_activity_device_connected">DeviceConnected</string>
