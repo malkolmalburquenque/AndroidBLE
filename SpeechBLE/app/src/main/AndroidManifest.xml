@@ -32,8 +32,6 @@
         <activity android:name=".BLEConnect">
         </activity>
 
-        <service android:name=".BLEService"/>
-
         <activity
             android:name=".Success"
             android:label="@string/title_activity_success"

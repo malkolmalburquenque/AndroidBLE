@@ -45,7 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="@color/colorBackground"
-            android:text="Pitch/Roll stupid"/>
+            android:text="Pitch/Roll"/>
 
         <Button
             android:id="@+id/buttonmic"
@@ -53,7 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="@color/colorLime"
-            android:text="Sing for me"/>
+            android:text="Mic"/>
     </LinearLayout>
 
     <LinearLayout
@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/colorBackground"
-            android:text=""/>
+            android:text="Pitch/Roll"/>
 
         <TextView
             android:id="@+id/miccomplete"
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/colorLime"
-            android:text=""/>
+            android:text="Mic"/>
     </LinearLayout>
 
 
